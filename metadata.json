@@ -1,0 +1,8 @@
+{
+  "name": "Remix NG Kerk Bethlehem-Wes ",
+  "description": "Alles-in-een kerkportaal vir Bethlehem-Wes Gemeente: maandkalender, kategese, weekprogram, boodskap vir die week, gebedslys, Sondag se preek op YouTube en tiendes/donasies.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

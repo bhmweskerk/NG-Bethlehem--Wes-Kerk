@@ -1,0 +1,260 @@
+{
+  "entities": {
+    "CalendarEvent": {
+      "title": "CalendarEvent",
+      "description": "Kerkkalender gebeurtenis vir die maand",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "time": { "type": "string", "minLength": 1, "maxLength": 30 },
+        "location": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "category": { "type": "string", "enum": ["Erediens", "Kategese", "Gemeenskap", "Jeug", "Uitreek"] },
+        "description": { "type": "string", "maxLength": 600 },
+        "isPublic": { "type": "boolean" },
+        "createdBy": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "date", "time", "location", "category", "description", "isPublic", "createdBy", "createdAt", "updatedAt"]
+    },
+    "CatechismClass": {
+      "title": "CatechismClass",
+      "description": "Kategeseklas rooster en lesinligting",
+      "type": "object",
+      "properties": {
+        "gradeGroup": { "type": "string", "enum": ["Gr 1–3", "Gr 4–6", "Gr 7–9", "Belydenisklas"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "teacher": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "time": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "room": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "currentTopic": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "nextAssignment": { "type": "string", "maxLength": 300 },
+        "isPublic": { "type": "boolean" },
+        "createdBy": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["gradeGroup", "title", "teacher", "time", "room", "currentTopic", "nextAssignment", "isPublic", "createdBy", "createdAt", "updatedAt"]
+    },
+    "ClassAnnouncement": {
+      "title": "ClassAnnouncement",
+      "description": "Klas aankondiging vir kategese",
+      "type": "object",
+      "properties": {
+        "gradeGroup": { "type": "string", "enum": ["Alle Klasse", "Gr 1–3", "Gr 4–6", "Gr 7–9", "Belydenisklas"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 800 },
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "author": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "important": { "type": "boolean" },
+        "isPublic": { "type": "boolean" },
+        "createdBy": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["gradeGroup", "title", "message", "dateLabel", "author", "important", "isPublic", "createdBy", "createdAt", "updatedAt"]
+    },
+    "BirthdayEntry": {
+      "title": "BirthdayEntry",
+      "description": "Verjaardae van die week",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "dayLabel": { "type": "string", "minLength": 1, "maxLength": 30 },
+        "dateStr": { "type": "string", "minLength": 1, "maxLength": 30 },
+        "group": { "type": "string", "maxLength": 60 },
+        "wishedCount": { "type": "integer" },
+        "isPublic": { "type": "boolean" },
+        "createdBy": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "dayLabel", "dateStr", "group", "wishedCount", "isPublic", "createdBy", "createdAt", "updatedAt"]
+    },
+    "WeeklyProgramItem": {
+      "title": "WeeklyProgramItem",
+      "description": "Item op die weekprogram",
+      "type": "object",
+      "properties": {
+        "dayOfWeek": { "type": "string", "enum": ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrydag", "Saterdag", "Sondag"] },
+        "time": { "type": "string", "minLength": 1, "maxLength": 30 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "location": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "leader": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "note": { "type": "string", "maxLength": 200 },
+        "isPublic": { "type": "boolean" },
+        "createdBy": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dayOfWeek", "time", "title", "location", "leader", "isPublic", "createdBy", "createdAt", "updatedAt"]
+    },
+    "SundaySermon": {
+      "title": "SundaySermon",
+      "description": "Sondag se preek, tema en YouTube-skakel",
+      "type": "object",
+      "properties": {
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "theme": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "scripture": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "preacher": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "organist": { "type": "string", "maxLength": 100 },
+        "doorCollection": { "type": "string", "maxLength": 120 },
+        "youtubeUrl": { "type": "string", "minLength": 10, "maxLength": 300 },
+        "summary": { "type": "string", "maxLength": 800 },
+        "isCurrent": { "type": "boolean" },
+        "isPublic": { "type": "boolean" },
+        "createdBy": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dateLabel", "title", "theme", "scripture", "preacher", "youtubeUrl", "summary", "isCurrent", "isPublic", "createdBy", "createdAt", "updatedAt"]
+    },
+    "GalleryPhoto": {
+      "title": "GalleryPhoto",
+      "description": "Foto van vorige gemeentegeleentheid soos Kerssangdiens",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "eventLabel": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "imageUrl": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "caption": { "type": "string", "maxLength": 400 },
+        "isPublic": { "type": "boolean" },
+        "createdBy": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "eventLabel", "dateLabel", "imageUrl", "caption", "isPublic", "createdBy", "createdAt", "updatedAt"]
+    },
+    "PrayerRequest": {
+      "title": "PrayerRequest",
+      "description": "Gebedsversoek op die gemeente se gebedslys",
+      "type": "object",
+      "properties": {
+        "personName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "category": { "type": "string", "enum": ["Gesondheid", "Familie", "Danksegging", "Leiding & Werk"] },
+        "request": { "type": "string", "minLength": 3, "maxLength": 700 },
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "prayingCount": { "type": "integer" },
+        "isAnswered": { "type": "boolean" },
+        "isAnonymous": { "type": "boolean" },
+        "isPublic": { "type": "boolean" },
+        "authorUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["personName", "category", "request", "dateLabel", "prayingCount", "isAnswered", "isAnonymous", "isPublic", "authorUid", "createdAt", "updatedAt"]
+    },
+    "WeeklyMessageDoc": {
+      "title": "WeeklyMessageDoc",
+      "description": "Boodskap vir die week deur die predikant",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "scripture": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "scriptureText": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "body": { "type": "array" },
+        "author": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "isPublic": { "type": "boolean" },
+        "updatedBy": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "scripture", "scriptureText", "body", "author", "dateLabel", "isPublic", "updatedBy", "updatedAt"]
+    },
+    "DonationPledge": {
+      "title": "DonationPledge",
+      "description": "Aangetekende tiende of bydrae verwysing vir lidmaat",
+      "type": "object",
+      "properties": {
+        "fund": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "amount": { "type": "number" },
+        "reference": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "method": { "type": "string", "enum": ["EFT", "SnapScan / QR"] },
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "ownerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fund", "amount", "reference", "method", "dateLabel", "ownerUid", "createdAt"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Kontaknavraag vanaf die kerkportaal",
+      "type": "object",
+      "properties": {
+        "senderName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "senderEmail": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "message": { "type": "string", "minLength": 3, "maxLength": 1200 },
+        "status": { "type": "string", "enum": ["Nuut", "Gelees"] },
+        "ownerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderName", "senderEmail", "subject", "message", "status", "ownerUid", "createdAt"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Gemeentebestuurder rolrekord",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 140 },
+        "role": { "type": "string", "enum": ["admin"] },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "addedAt"]
+    }
+  },
+  "firestore": {
+    "/calendarEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/CalendarEvent" },
+      "description": "Maandelikse kerkkalender gebeurtenisse"
+    },
+    "/catechismClasses/{classId}": {
+      "schema": { "$ref": "#/entities/CatechismClass" },
+      "description": "Kategese klasse en skedule"
+    },
+    "/classAnnouncements/{announcementId}": {
+      "schema": { "$ref": "#/entities/ClassAnnouncement" },
+      "description": "Kategese klas aankondigings"
+    },
+    "/birthdays/{birthdayId}": {
+      "schema": { "$ref": "#/entities/BirthdayEntry" },
+      "description": "Verjaardae van die week"
+    },
+    "/weeklyProgram/{programId}": {
+      "schema": { "$ref": "#/entities/WeeklyProgramItem" },
+      "description": "Weeklikse gemeenteprogram"
+    },
+    "/sermons/{sermonId}": {
+      "schema": { "$ref": "#/entities/SundaySermon" },
+      "description": "Sondag se preek, tema en YouTube-skakel"
+    },
+    "/galleryPhotos/{photoId}": {
+      "schema": { "$ref": "#/entities/GalleryPhoto" },
+      "description": "Gemeente foto-galery van vorige geleenthede"
+    },
+    "/prayerRequests/{prayerId}": {
+      "schema": { "$ref": "#/entities/PrayerRequest" },
+      "description": "Gemeente se gebedslys"
+    },
+    "/churchContent/{docId}": {
+      "schema": { "$ref": "#/entities/WeeklyMessageDoc" },
+      "description": "Boodskap vir die week en NG Kerk Bethlehem-Wes konfigurasie (bankbesonderhede, VKB/AFGRI, kontakinligting, Facebook en kaart-skakels)"
+    },
+    "/donationPledges/{pledgeId}": {
+      "schema": { "$ref": "#/entities/DonationPledge" },
+      "description": "Private tiendes en bydraes van lidmate"
+    },
+    "/contactMessages/{messageId}": {
+      "schema": { "$ref": "#/entities/ContactMessage" },
+      "description": "Private kontakvorm boodskappe"
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Gemeente-administrateurs"
+    }
+  }
+}

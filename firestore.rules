@@ -1,0 +1,476 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Global Hardened Primitives
+    // -------------------------------------------------------------------------
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrapAdmin() {
+      return isVerified() && request.auth.token.email == 'bhmweskerk@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin() || (isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // -------------------------------------------------------------------------
+    // Validation Blueprints
+    // -------------------------------------------------------------------------
+    function isValidCalendarEvent(data) {
+      return data.keys().hasAll(['title', 'date', 'time', 'location', 'category', 'description', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['title', 'date', 'time', 'location', 'category', 'description', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+        && data.date is string && data.date.size() == 10 && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+        && data.time is string && data.time.size() >= 1 && data.time.size() <= 30
+        && data.location is string && data.location.size() >= 1 && data.location.size() <= 100
+        && data.category in ['Erediens', 'Kategese', 'Gemeenskap', 'Jeug', 'Uitreek']
+        && data.description is string && data.description.size() <= 600
+        && data.isPublic is bool
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 && data.createdBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCatechismClass(data) {
+      return data.keys().hasAll(['gradeGroup', 'title', 'teacher', 'time', 'room', 'currentTopic', 'nextAssignment', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['gradeGroup', 'title', 'teacher', 'time', 'room', 'currentTopic', 'nextAssignment', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.gradeGroup in ['Gr 1–3', 'Gr 4–6', 'Gr 7–9', 'Belydenisklas']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+        && data.teacher is string && data.teacher.size() >= 1 && data.teacher.size() <= 100
+        && data.time is string && data.time.size() >= 1 && data.time.size() <= 60
+        && data.room is string && data.room.size() >= 1 && data.room.size() <= 80
+        && data.currentTopic is string && data.currentTopic.size() >= 1 && data.currentTopic.size() <= 200
+        && data.nextAssignment is string && data.nextAssignment.size() <= 300
+        && data.isPublic is bool
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 && data.createdBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidClassAnnouncement(data) {
+      return data.keys().hasAll(['gradeGroup', 'title', 'message', 'dateLabel', 'author', 'important', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['gradeGroup', 'title', 'message', 'dateLabel', 'author', 'important', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.gradeGroup in ['Alle Klasse', 'Gr 1–3', 'Gr 4–6', 'Gr 7–9', 'Belydenisklas']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 140
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 800
+        && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 40
+        && data.author is string && data.author.size() >= 1 && data.author.size() <= 100
+        && data.important is bool
+        && data.isPublic is bool
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 && data.createdBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBirthdayEntry(data) {
+      return data.keys().hasAll(['name', 'dayLabel', 'dateStr', 'group', 'wishedCount', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'dayLabel', 'dateStr', 'group', 'wishedCount', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.dayLabel is string && data.dayLabel.size() >= 1 && data.dayLabel.size() <= 30
+        && data.dateStr is string && data.dateStr.size() >= 1 && data.dateStr.size() <= 30
+        && data.group is string && data.group.size() <= 60
+        && data.wishedCount is int && data.wishedCount >= 0 && data.wishedCount <= 100000
+        && data.isPublic is bool
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 && data.createdBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWeeklyProgramItem(data) {
+      return data.keys().hasAll(['dayOfWeek', 'time', 'title', 'location', 'leader', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['dayOfWeek', 'time', 'title', 'location', 'leader', 'note', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.dayOfWeek in ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrydag', 'Saterdag', 'Sondag']
+        && data.time is string && data.time.size() >= 1 && data.time.size() <= 30
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 140
+        && data.location is string && data.location.size() >= 1 && data.location.size() <= 100
+        && data.leader is string && data.leader.size() >= 1 && data.leader.size() <= 100
+        && (!('note' in data) || (data.note is string && data.note.size() <= 200))
+        && data.isPublic is bool
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 && data.createdBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSundaySermon(data) {
+      return data.keys().hasAll(['dateLabel', 'title', 'theme', 'scripture', 'preacher', 'youtubeUrl', 'summary', 'isCurrent', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['dateLabel', 'title', 'theme', 'scripture', 'preacher', 'organist', 'doorCollection', 'youtubeUrl', 'summary', 'isCurrent', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 60
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.theme is string && data.theme.size() >= 1 && data.theme.size() <= 180
+        && data.scripture is string && data.scripture.size() >= 1 && data.scripture.size() <= 120
+        && data.preacher is string && data.preacher.size() >= 1 && data.preacher.size() <= 100
+        && (!('organist' in data) || (data.organist is string && data.organist.size() <= 100))
+        && (!('doorCollection' in data) || (data.doorCollection is string && data.doorCollection.size() <= 120))
+        && data.youtubeUrl is string && data.youtubeUrl.size() >= 10 && data.youtubeUrl.size() <= 300
+        && data.summary is string && data.summary.size() <= 800
+        && data.isCurrent is bool
+        && data.isPublic is bool
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 && data.createdBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidGalleryPhoto(data) {
+      return data.keys().hasAll(['title', 'eventLabel', 'dateLabel', 'imageUrl', 'caption', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['title', 'eventLabel', 'dateLabel', 'imageUrl', 'caption', 'isPublic', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 140
+        && data.eventLabel is string && data.eventLabel.size() >= 1 && data.eventLabel.size() <= 100
+        && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 40
+        && data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 500
+        && data.caption is string && data.caption.size() <= 400
+        && data.isPublic is bool
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 && data.createdBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPrayerRequest(data) {
+      return data.keys().hasAll(['personName', 'category', 'request', 'dateLabel', 'prayingCount', 'isAnswered', 'isAnonymous', 'isPublic', 'authorUid', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['personName', 'category', 'request', 'dateLabel', 'prayingCount', 'isAnswered', 'isAnonymous', 'isPublic', 'authorUid', 'createdAt', 'updatedAt'])
+        && data.personName is string && data.personName.size() >= 1 && data.personName.size() <= 100
+        && data.category in ['Gesondheid', 'Familie', 'Danksegging', 'Leiding & Werk']
+        && data.request is string && data.request.size() >= 3 && data.request.size() <= 700
+        && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 40
+        && data.prayingCount is int && data.prayingCount >= 0 && data.prayingCount <= 100000
+        && data.isAnswered is bool
+        && data.isAnonymous is bool
+        && data.isPublic is bool
+        && data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128 && data.authorUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWeeklyMessageDoc(data) {
+      return data.keys().hasAll(['title', 'scripture', 'scriptureText', 'body', 'author', 'dateLabel', 'isPublic', 'updatedBy', 'updatedAt'])
+        && data.keys().hasOnly(['title', 'scripture', 'scriptureText', 'body', 'author', 'dateLabel', 'isPublic', 'updatedBy', 'updatedAt'])
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 180
+        && data.scripture is string && data.scripture.size() >= 1 && data.scripture.size() <= 100
+        && data.scriptureText is string && data.scriptureText.size() >= 1 && data.scriptureText.size() <= 600
+        && data.body is list && data.body.size() >= 1 && data.body.size() <= 15 && data.body[0] is string && data.body[0].size() <= 2000
+        && data.author is string && data.author.size() >= 1 && data.author.size() <= 100
+        && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 60
+        && data.isPublic is bool
+        && data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128 && data.updatedBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidChurchSettingsDoc(data) {
+      return data.keys().hasAll(['bankDetails', 'contactInfo', 'isPublic', 'updatedBy', 'updatedAt'])
+        && data.keys().hasOnly(['bankDetails', 'contactInfo', 'isPublic', 'updatedBy', 'updatedAt'])
+        && data.bankDetails is map
+        && data.bankDetails.keys().hasAll(['churchName', 'bankName', 'accountName', 'accountNumber', 'branchCode', 'accountType', 'vkbNumber', 'afgriNumber', 'referenceGuide'])
+        && data.bankDetails.keys().hasOnly(['churchName', 'bankName', 'accountName', 'accountNumber', 'branchCode', 'accountType', 'vkbNumber', 'afgriNumber', 'referenceGuide'])
+        && data.bankDetails.churchName is string && data.bankDetails.churchName.size() <= 100
+        && data.bankDetails.bankName is string && data.bankDetails.bankName.size() <= 80
+        && data.bankDetails.accountName is string && data.bankDetails.accountName.size() <= 100
+        && data.bankDetails.accountNumber is string && data.bankDetails.accountNumber.size() <= 40
+        && data.bankDetails.branchCode is string && data.bankDetails.branchCode.size() <= 20
+        && data.bankDetails.accountType is string && data.bankDetails.accountType.size() <= 40
+        && data.bankDetails.vkbNumber is string && data.bankDetails.vkbNumber.size() <= 40
+        && data.bankDetails.afgriNumber is string && data.bankDetails.afgriNumber.size() <= 40
+        && data.bankDetails.referenceGuide is string && data.bankDetails.referenceGuide.size() <= 200
+        && data.contactInfo is map
+        && data.contactInfo.keys().hasAll(['address', 'officeHours', 'phone', 'closureNotice', 'teaNotice', 'pastorName', 'pastorPhone', 'youtubeChannelUrl'])
+        && data.contactInfo.keys().hasOnly(['address', 'officeHours', 'phone', 'email', 'closureNotice', 'teaNotice', 'pastorName', 'pastorPhone', 'youtubeChannelUrl', 'facebookUrl', 'mapsUrl'])
+        && data.contactInfo.address is string && data.contactInfo.address.size() <= 200
+        && data.contactInfo.officeHours is string && data.contactInfo.officeHours.size() <= 100
+        && data.contactInfo.phone is string && data.contactInfo.phone.size() <= 40
+        && (!('email' in data.contactInfo) || (data.contactInfo.email is string && data.contactInfo.email.size() <= 140))
+        && data.contactInfo.closureNotice is string && data.contactInfo.closureNotice.size() <= 200
+        && data.contactInfo.teaNotice is string && data.contactInfo.teaNotice.size() <= 120
+        && data.contactInfo.pastorName is string && data.contactInfo.pastorName.size() <= 100
+        && data.contactInfo.pastorPhone is string && data.contactInfo.pastorPhone.size() <= 60
+        && data.contactInfo.youtubeChannelUrl is string && data.contactInfo.youtubeChannelUrl.size() <= 300
+        && (!('facebookUrl' in data.contactInfo) || (data.contactInfo.facebookUrl is string && data.contactInfo.facebookUrl.size() <= 300))
+        && (!('mapsUrl' in data.contactInfo) || (data.contactInfo.mapsUrl is string && data.contactInfo.mapsUrl.size() <= 300))
+        && data.isPublic is bool
+        && data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128 && data.updatedBy.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDonationPledge(data) {
+      return data.keys().hasAll(['fund', 'amount', 'reference', 'method', 'dateLabel', 'ownerUid', 'createdAt'])
+        && data.keys().hasOnly(['fund', 'amount', 'reference', 'method', 'dateLabel', 'ownerUid', 'createdAt'])
+        && data.fund is string && data.fund.size() >= 1 && data.fund.size() <= 80
+        && data.amount is number && data.amount > 0 && data.amount <= 10000000
+        && data.reference is string && data.reference.size() >= 1 && data.reference.size() <= 80
+        && data.method in ['EFT', 'SnapScan / QR']
+        && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 40
+        && data.ownerUid is string && data.ownerUid.size() >= 1 && data.ownerUid.size() <= 128 && data.ownerUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp;
+    }
+
+    function isValidContactMessage(data) {
+      return data.keys().hasAll(['senderName', 'senderEmail', 'subject', 'message', 'status', 'ownerUid', 'createdAt'])
+        && data.keys().hasOnly(['senderName', 'senderEmail', 'subject', 'message', 'status', 'ownerUid', 'createdAt'])
+        && data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 100
+        && data.senderEmail is string && data.senderEmail.size() >= 3 && data.senderEmail.size() <= 140
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 100
+        && data.message is string && data.message.size() >= 3 && data.message.size() <= 1200
+        && data.status in ['Nuut', 'Gelees']
+        && data.ownerUid is string && data.ownerUid.size() >= 1 && data.ownerUid.size() <= 128 && data.ownerUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['email', 'role', 'addedAt'])
+        && data.keys().hasOnly(['email', 'role', 'addedAt'])
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 140
+        && data.role == 'admin'
+        && data.addedAt is timestamp;
+    }
+
+    // -------------------------------------------------------------------------
+    // Public Congregation Bulletin Collections
+    // -------------------------------------------------------------------------
+    match /calendarEvents/{eventId} {
+      allow get: if isValidId(eventId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(eventId)
+        && isAdmin()
+        && isValidCalendarEvent(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(eventId)
+        && isAdmin()
+        && isValidCalendarEvent(incoming())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'date', 'time', 'location', 'category', 'description', 'isPublic', 'updatedAt']);
+      allow delete: if isValidId(eventId) && isAdmin();
+    }
+
+    match /catechismClasses/{classId} {
+      allow get: if isValidId(classId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(classId)
+        && isAdmin()
+        && isValidCatechismClass(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(classId)
+        && isAdmin()
+        && isValidCatechismClass(incoming())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['gradeGroup', 'title', 'teacher', 'time', 'room', 'currentTopic', 'nextAssignment', 'isPublic', 'updatedAt']);
+      allow delete: if isValidId(classId) && isAdmin();
+    }
+
+    match /classAnnouncements/{announcementId} {
+      allow get: if isValidId(announcementId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(announcementId)
+        && isAdmin()
+        && isValidClassAnnouncement(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(announcementId)
+        && isAdmin()
+        && isValidClassAnnouncement(incoming())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['gradeGroup', 'title', 'message', 'dateLabel', 'author', 'important', 'isPublic', 'updatedAt']);
+      allow delete: if isValidId(announcementId) && isAdmin();
+    }
+
+    match /birthdays/{birthdayId} {
+      allow get: if isValidId(birthdayId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(birthdayId)
+        && isAdmin()
+        && isValidBirthdayEntry(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(birthdayId)
+        && isVerified()
+        && isValidBirthdayEntry(incoming())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'dayLabel', 'dateStr', 'group', 'wishedCount', 'isPublic', 'updatedAt']))
+          || (incoming().diff(existing()).affectedKeys().hasOnly(['wishedCount', 'updatedAt']) && incoming().wishedCount == existing().wishedCount + 1)
+        );
+      allow delete: if isValidId(birthdayId) && isAdmin();
+    }
+
+    match /weeklyProgram/{programId} {
+      allow get: if isValidId(programId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(programId)
+        && isAdmin()
+        && isValidWeeklyProgramItem(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(programId)
+        && isAdmin()
+        && isValidWeeklyProgramItem(incoming())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['dayOfWeek', 'time', 'title', 'location', 'leader', 'note', 'isPublic', 'updatedAt']);
+      allow delete: if isValidId(programId) && isAdmin();
+    }
+
+    match /sermons/{sermonId} {
+      allow get: if isValidId(sermonId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(sermonId)
+        && isAdmin()
+        && isValidSundaySermon(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(sermonId)
+        && isAdmin()
+        && isValidSundaySermon(incoming())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['dateLabel', 'title', 'theme', 'scripture', 'preacher', 'organist', 'doorCollection', 'youtubeUrl', 'summary', 'isCurrent', 'isPublic', 'updatedAt']);
+      allow delete: if isValidId(sermonId) && isAdmin();
+    }
+
+    match /galleryPhotos/{photoId} {
+      allow get: if isValidId(photoId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(photoId)
+        && isAdmin()
+        && isValidGalleryPhoto(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(photoId)
+        && isAdmin()
+        && isValidGalleryPhoto(incoming())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'eventLabel', 'dateLabel', 'imageUrl', 'caption', 'isPublic', 'updatedAt']);
+      allow delete: if isValidId(photoId) && isAdmin();
+    }
+
+    match /prayerRequests/{prayerId} {
+      allow get: if isValidId(prayerId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(prayerId)
+        && isVerified()
+        && isValidPrayerRequest(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().prayingCount == 1
+        && incoming().isAnswered == false
+        && incoming().isPublic == true
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(prayerId)
+        && isVerified()
+        && isValidPrayerRequest(incoming())
+        && incoming().authorUid == existing().authorUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['personName', 'category', 'request', 'dateLabel', 'prayingCount', 'isAnswered', 'isAnonymous', 'isPublic', 'updatedAt']))
+          || (existing().isAnswered == false && incoming().diff(existing()).affectedKeys().hasOnly(['prayingCount', 'updatedAt']) && incoming().prayingCount == existing().prayingCount + 1)
+          || (existing().authorUid == request.auth.uid && existing().isAnswered == false && incoming().diff(existing()).affectedKeys().hasOnly(['isAnswered', 'updatedAt']) && incoming().isAnswered == true)
+        );
+      allow delete: if isValidId(prayerId) && (isAdmin() || (isVerified() && existing().authorUid == request.auth.uid));
+    }
+
+    match /churchContent/{docId} {
+      allow get: if isValidId(docId) && (existing().isPublic == true || isAdmin());
+      allow list: if resource.data.isPublic == true;
+      allow create: if isValidId(docId)
+        && isAdmin()
+        && incoming().updatedBy == request.auth.uid
+        && incoming().updatedAt == request.time
+        && (
+          (docId == 'weeklyMessage' && isValidWeeklyMessageDoc(incoming()))
+          || (docId == 'settings' && isValidChurchSettingsDoc(incoming()))
+        );
+      allow update: if isValidId(docId)
+        && isAdmin()
+        && incoming().updatedBy == request.auth.uid
+        && incoming().updatedAt == request.time
+        && (
+          (docId == 'weeklyMessage' && isValidWeeklyMessageDoc(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'scripture', 'scriptureText', 'body', 'author', 'dateLabel', 'isPublic', 'updatedBy', 'updatedAt']))
+          || (docId == 'settings' && isValidChurchSettingsDoc(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['bankDetails', 'contactInfo', 'isPublic', 'updatedBy', 'updatedAt']))
+        );
+      allow delete: if isValidId(docId) && isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // Private Member & Admin Collections (PII Isolated)
+    // -------------------------------------------------------------------------
+    match /donationPledges/{pledgeId} {
+      allow get: if isValidId(pledgeId) && (isAdmin() || (isVerified() && existing().ownerUid == request.auth.uid));
+      allow list: if isBootstrapAdmin() || (isVerified() && resource.data.ownerUid == request.auth.uid);
+      allow create: if isValidId(pledgeId)
+        && isVerified()
+        && isValidDonationPledge(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isValidId(pledgeId) && (isAdmin() || (isVerified() && existing().ownerUid == request.auth.uid));
+    }
+
+    match /contactMessages/{messageId} {
+      allow get: if isValidId(messageId) && (isAdmin() || (isVerified() && existing().ownerUid == request.auth.uid));
+      allow list: if isBootstrapAdmin() || (isVerified() && resource.data.ownerUid == request.auth.uid);
+      allow create: if isValidId(messageId)
+        && isVerified()
+        && isValidContactMessage(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().status == 'Nuut'
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(messageId)
+        && isAdmin()
+        && isValidContactMessage(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isValidId(messageId) && isAdmin();
+    }
+
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && (isAdmin() || (isVerified() && request.auth.uid == adminUid));
+      allow list: if isBootstrapAdmin();
+      allow create, update: if isValidId(adminUid) && isBootstrapAdmin() && isValidAdminUser(incoming());
+      allow delete: if isValidId(adminUid) && isBootstrapAdmin();
+    }
+  }
+}
